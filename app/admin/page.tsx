@@ -15,65 +15,44 @@ export default function AdminPage() {
   useEffect(() => {
     const checkChromaAvailability = async () => {
       try {
-        const chromaUrl = process.env.CHROMA_URL || 'http://localhost:8000';
-        console.debug("Checking Chroma availability at:", chromaUrl);
+        console.debug("Checking ChromaDB availability via server API");
         
-        // Try using fetch first
+        // Only use the server-side API endpoint to check ChromaDB availability
         try {
-          const response = await fetch(`${chromaUrl}/api/v2/heartbeat`, {
+          const serverCheckResponse = await fetch('/api/check-chroma', {
             method: 'GET',
+            cache: 'no-store', // Prevent caching
             headers: {
-              'Accept': 'application/json',
-            },
-            signal: AbortSignal.timeout(2000), // 2 second timeout
+              'pragma': 'no-cache',
+              'cache-control': 'no-cache'
+            }
           });
           
-          console.debug("Chroma response status:", response.status);
+          console.debug("Server API response status:", serverCheckResponse.status);
           
-          if (response.ok) {
-            try {
-              const responseText = await response.text();
-              console.debug("Chroma response text:", responseText);
-              
-              // Check if response contains heartbeat data
-              if (responseText.includes("heartbeat")) {
-                console.debug("Chroma is available");
-                setChromaStatus('available');
-                return;
-              }
-            } catch (parseError) {
-              console.error("Error parsing Chroma response:", parseError);
-            }
-          }
-          
-          // If we got here, the response wasn't valid
-          console.debug("Chroma response wasn't valid");
-          setChromaStatus('unavailable');
-        } catch (fetchError) {
-          console.error("Fetch error checking Chroma:", fetchError);
-          // Continue to try other methods if fetch fails
-          
-          // Make a server-side call as a fallback
-          try {
-            const serverCheckResponse = await fetch('/api/check-chroma', {
-              method: 'GET',
-            });
+          if (serverCheckResponse.ok) {
+            const result = await serverCheckResponse.json();
+            console.debug("Server API response:", result);
             
-            if (serverCheckResponse.ok) {
-              const result = await serverCheckResponse.json();
-              if (result.available) {
-                setChromaStatus('available');
-                return;
-              }
+            if (result.available) {
+              console.debug("ChromaDB is available according to server API");
+              setChromaStatus('available');
+              return;
+            } else {
+              console.debug("ChromaDB is unavailable according to server API:", result.message);
             }
-          } catch (serverCheckError) {
-            console.error("Server-side check error:", serverCheckError);
+          } else {
+            console.debug("Server API response not OK:", serverCheckResponse.status);
           }
           
+          // If we reach here, ChromaDB is unavailable
+          setChromaStatus('unavailable');
+        } catch (error) {
+          console.error("Error checking ChromaDB availability via server API:", error);
           setChromaStatus('unavailable');
         }
       } catch (error) {
-        console.error('Error in overall Chroma availability check:', error);
+        console.error('Fatal error in ChromaDB availability check:', error);
         setChromaStatus('unavailable');
       }
     };

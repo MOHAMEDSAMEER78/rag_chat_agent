@@ -332,57 +332,39 @@ function AdminPage() {
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         const checkChromaAvailability = async ()=>{
             try {
-                const chromaUrl = process.env.CHROMA_URL || 'http://localhost:8000';
-                console.debug("Checking Chroma availability at:", chromaUrl);
-                // Try using fetch first
+                console.debug("Checking ChromaDB availability via server API");
+                // Only use the server-side API endpoint to check ChromaDB availability
                 try {
-                    const response = await fetch(`${chromaUrl}/api/v2/heartbeat`, {
+                    const serverCheckResponse = await fetch('/api/check-chroma', {
                         method: 'GET',
+                        cache: 'no-store',
                         headers: {
-                            'Accept': 'application/json'
-                        },
-                        signal: AbortSignal.timeout(2000)
+                            'pragma': 'no-cache',
+                            'cache-control': 'no-cache'
+                        }
                     });
-                    console.debug("Chroma response status:", response.status);
-                    if (response.ok) {
-                        try {
-                            const responseText = await response.text();
-                            console.debug("Chroma response text:", responseText);
-                            // Check if response contains heartbeat data
-                            if (responseText.includes("heartbeat")) {
-                                console.debug("Chroma is available");
-                                setChromaStatus('available');
-                                return;
-                            }
-                        } catch (parseError) {
-                            console.error("Error parsing Chroma response:", parseError);
+                    console.debug("Server API response status:", serverCheckResponse.status);
+                    if (serverCheckResponse.ok) {
+                        const result = await serverCheckResponse.json();
+                        console.debug("Server API response:", result);
+                        if (result.available) {
+                            console.debug("ChromaDB is available according to server API");
+                            setChromaStatus('available');
+                            return;
+                        } else {
+                            console.debug("ChromaDB is unavailable according to server API:", result.message);
                         }
+                    } else {
+                        console.debug("Server API response not OK:", serverCheckResponse.status);
                     }
-                    // If we got here, the response wasn't valid
-                    console.debug("Chroma response wasn't valid");
+                    // If we reach here, ChromaDB is unavailable
                     setChromaStatus('unavailable');
-                } catch (fetchError) {
-                    console.error("Fetch error checking Chroma:", fetchError);
-                    // Continue to try other methods if fetch fails
-                    // Make a server-side call as a fallback
-                    try {
-                        const serverCheckResponse = await fetch('/api/check-chroma', {
-                            method: 'GET'
-                        });
-                        if (serverCheckResponse.ok) {
-                            const result = await serverCheckResponse.json();
-                            if (result.available) {
-                                setChromaStatus('available');
-                                return;
-                            }
-                        }
-                    } catch (serverCheckError) {
-                        console.error("Server-side check error:", serverCheckError);
-                    }
+                } catch (error) {
+                    console.error("Error checking ChromaDB availability via server API:", error);
                     setChromaStatus('unavailable');
                 }
             } catch (error) {
-                console.error('Error in overall Chroma availability check:', error);
+                console.error('Fatal error in ChromaDB availability check:', error);
                 setChromaStatus('unavailable');
             }
         };
@@ -430,7 +412,7 @@ function AdminPage() {
                     children: "Admin Dashboard"
                 }, void 0, false, {
                     fileName: "[project]/app/admin/page.tsx",
-                    lineNumber: 124,
+                    lineNumber: 103,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -441,7 +423,7 @@ function AdminPage() {
                             children: "System Status"
                         }, void 0, false, {
                             fileName: "[project]/app/admin/page.tsx",
-                            lineNumber: 128,
+                            lineNumber: 107,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -451,20 +433,20 @@ function AdminPage() {
                                     className: `w-3 h-3 rounded-full mr-2 ${chromaStatus === 'checking' ? 'bg-yellow-400' : chromaStatus === 'available' ? 'bg-green-500' : 'bg-red-500'}`
                                 }, void 0, false, {
                                     fileName: "[project]/app/admin/page.tsx",
-                                    lineNumber: 130,
+                                    lineNumber: 109,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                     children: chromaStatus === 'checking' ? 'Checking ChromaDB status...' : chromaStatus === 'available' ? 'ChromaDB is available' : 'ChromaDB is unavailable - RAG functionality will be limited'
                                 }, void 0, false, {
                                     fileName: "[project]/app/admin/page.tsx",
-                                    lineNumber: 134,
+                                    lineNumber: 113,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/admin/page.tsx",
-                            lineNumber: 129,
+                            lineNumber: 108,
                             columnNumber: 11
                         }, this),
                         chromaStatus === 'unavailable' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -474,7 +456,7 @@ function AdminPage() {
                                     children: "ChromaDB is not running. To enable full functionality:"
                                 }, void 0, false, {
                                     fileName: "[project]/app/admin/page.tsx",
-                                    lineNumber: 142,
+                                    lineNumber: 121,
                                     columnNumber: 15
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("ol", {
@@ -488,13 +470,13 @@ function AdminPage() {
                                                     children: "docker-compose up chromadb"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/admin/page.tsx",
-                                                    lineNumber: 144,
+                                                    lineNumber: 123,
                                                     columnNumber: 38
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/admin/page.tsx",
-                                            lineNumber: 144,
+                                            lineNumber: 123,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("li", {
@@ -505,45 +487,45 @@ function AdminPage() {
                                                     children: "docker run -p 8000:8000 chromadb/chroma"
                                                 }, void 0, false, {
                                                     fileName: "[project]/app/admin/page.tsx",
-                                                    lineNumber: 145,
+                                                    lineNumber: 124,
                                                     columnNumber: 40
                                                 }, this)
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/app/admin/page.tsx",
-                                            lineNumber: 145,
+                                            lineNumber: 124,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("li", {
                                             children: "Or install and run Chroma locally"
                                         }, void 0, false, {
                                             fileName: "[project]/app/admin/page.tsx",
-                                            lineNumber: 146,
+                                            lineNumber: 125,
                                             columnNumber: 17
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("li", {
                                             children: "Refresh this page after starting ChromaDB"
                                         }, void 0, false, {
                                             fileName: "[project]/app/admin/page.tsx",
-                                            lineNumber: 147,
+                                            lineNumber: 126,
                                             columnNumber: 17
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/app/admin/page.tsx",
-                                    lineNumber: 143,
+                                    lineNumber: 122,
                                     columnNumber: 15
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/admin/page.tsx",
-                            lineNumber: 141,
+                            lineNumber: 120,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/admin/page.tsx",
-                    lineNumber: 127,
+                    lineNumber: 106,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -554,7 +536,7 @@ function AdminPage() {
                             children: "Web Scraping"
                         }, void 0, false, {
                             fileName: "[project]/app/admin/page.tsx",
-                            lineNumber: 155,
+                            lineNumber: 134,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -565,7 +547,7 @@ function AdminPage() {
                             ]
                         }, void 0, true, {
                             fileName: "[project]/app/admin/page.tsx",
-                            lineNumber: 156,
+                            lineNumber: 135,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -575,7 +557,7 @@ function AdminPage() {
                             children: isScrapingWeb ? 'Scraping...' : 'Start Web Scraping'
                         }, void 0, false, {
                             fileName: "[project]/app/admin/page.tsx",
-                            lineNumber: 162,
+                            lineNumber: 141,
                             columnNumber: 11
                         }, this),
                         scrapingResult && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -583,31 +565,31 @@ function AdminPage() {
                             children: scrapingResult.message
                         }, void 0, false, {
                             fileName: "[project]/app/admin/page.tsx",
-                            lineNumber: 171,
+                            lineNumber: 150,
                             columnNumber: 13
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/app/admin/page.tsx",
-                    lineNumber: 154,
+                    lineNumber: 133,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$app$2f$components$2f$PdfUploader$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
                     chromaStatus: chromaStatus
                 }, void 0, false, {
                     fileName: "[project]/app/admin/page.tsx",
-                    lineNumber: 182,
+                    lineNumber: 161,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/app/admin/page.tsx",
-            lineNumber: 123,
+            lineNumber: 102,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/app/admin/page.tsx",
-        lineNumber: 122,
+        lineNumber: 101,
         columnNumber: 5
     }, this);
 }

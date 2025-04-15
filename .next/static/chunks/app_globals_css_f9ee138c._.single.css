@@ -327,6 +327,10 @@
 @layer components;
 
 @layer utilities {
+  .collapse {
+    visibility: collapse;
+  }
+
   .visible {
     visibility: visible;
   }
@@ -912,6 +916,10 @@
 
   .italic {
     font-style: italic;
+  }
+
+  .overline {
+    text-decoration-line: overline;
   }
 
   .underline {

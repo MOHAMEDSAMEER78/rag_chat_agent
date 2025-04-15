@@ -5,7 +5,7 @@ FROM base AS deps
 WORKDIR /app
 
 # Install additional dependencies for Puppeteer
-RUN apk add --no-cache nss freetype freetype-dev harfbuzz ca-certificates ttf-freefont chromium
+RUN apk add nss freetype freetype-dev harfbuzz ca-certificates ttf-freefont chromium
 
 # Copy package files for installation
 COPY package.json package-lock.json* yarn.lock* ./
@@ -21,6 +21,8 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# Disable ONNX runtime to avoid ARM64 compatibility issues
+ENV DISABLE_ONNX_RUNTIME=1
 
 # Build the application
 RUN npm run build
@@ -33,9 +35,11 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+# Disable ONNX runtime to avoid ARM64 compatibility issues
+ENV DISABLE_ONNX_RUNTIME=1
 
 # Install runtime dependencies for Puppeteer
-RUN apk add --no-cache nss freetype harfbuzz ca-certificates ttf-freefont chromium
+RUN apk add nss freetype harfbuzz ca-certificates ttf-freefont chromium
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
