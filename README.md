@@ -28,6 +28,7 @@ A Retrieval-Augmented Generation (RAG) based chatbot trained on Angel One's cust
 - Node.js (v18 or higher)
 - npm or yarn
 - Google API key (Gemini)
+- Docker & Docker Compose (optional, for containerized deployment)
 
 ### Installation
 
@@ -50,7 +51,6 @@ yarn install
 
 ```
 GOOGLE_API_KEY=your-google-api-key-here
-ADMIN_API_KEY=your-chosen-admin-key
 ```
 
 4. Run the development server:
@@ -62,6 +62,57 @@ yarn dev
 ```
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the chatbot interface.
+
+### Docker Deployment
+
+1. Create a `.env` file in the root directory with your environment variables:
+
+```bash
+GOOGLE_API_KEY=your-google-api-key-here
+```
+
+Alternatively, use the provided helper script:
+
+```bash
+chmod +x docker-setup.sh
+./docker-setup.sh
+```
+
+This script will:
+- Create a `.env` file from `.env.docker` if it doesn't exist
+- Prompt you to add your API keys
+- Build and start the containers
+
+2. Build and start the Docker containers:
+
+```bash
+docker-compose up -d
+```
+
+This will:
+- Build the Next.js application container
+- Pull and start the ChromaDB container
+- Connect the services together
+
+3. Access the application at [http://localhost:3000](http://localhost:3000)
+
+4. To stop the containers:
+
+```bash
+docker-compose down
+```
+
+5. To view logs:
+
+```bash
+docker-compose logs -f
+```
+
+6. To only start ChromaDB (for development with local Next.js):
+
+```bash
+docker-compose up chromadb
+```
 
 ## 📚 Usage
 
@@ -108,7 +159,7 @@ The application can be deployed to Vercel or any other hosting service that supp
 
 1. Push your code to GitHub
 2. Connect your repository to Vercel
-3. Set the environment variables (GOOGLE_API_KEY, ADMIN_API_KEY) in the Vercel dashboard
+3. Set the environment variables (GOOGLE_API_KEY) in the Vercel dashboard
 4. Deploy the application
 
 ## 📄 License
