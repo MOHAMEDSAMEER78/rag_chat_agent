@@ -1,5 +1,0 @@
-{
-  "/admin/page": "app/admin/page.js",
-  "/api/check-chroma/route": "app/api/check-chroma/route.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
-}
