@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
@@ -15,16 +15,29 @@ type Message = {
 
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hi there! I'm your Angel One support assistant. How can I help you today?" }
+    {
+      role: 'system',
+      content: 'I am an AI assistant that can help with Angel One related queries.'
+    },
+    {
+      role: 'assistant',
+      content: "Hi there! I'm your Angel One support assistant. How can I help you today?"
+    }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSend = async () => {
-    if (input.trim() === '') return;
+    if (input.trim() === '' || loading) return;
     
     // Add user message
-    const userMessage: Message = { role: 'user', content: input };
+    const userMessage: Message = { role: 'user', content: input.trim() };
     setMessages(prev => [...prev, userMessage]);
     
     // Clear input and set loading
@@ -32,23 +45,38 @@ export default function ChatInterface() {
     setLoading(true);
     
     try {
-      // This is a placeholder - in a real app, you would call your AI backend here
-      // For demo purposes, we'll just simulate a response after a delay
-      setTimeout(() => {
-        const assistantMessage: Message = { 
-          role: 'assistant', 
-          content: "I'm an AI assistant for Angel One. I'd be happy to help with your questions about Angel One's services, trading accounts, investments, or technical support. What specifically would you like to know?" 
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-        setLoading(false);
-      }, 1000);
+      // Call the chat API endpoint
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+        }),
+        // Add a timeout to prevent hanging forever
+        signal: AbortSignal.timeout(15000), // 15 seconds timeout
+      });
       
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Add the assistant's response to the chat
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.content 
+      }]);
     } catch (error) {
       console.error('Error calling AI:', error);
       setMessages(prev => [...prev, { 
-        role: 'assistant' as const, 
-        content: "I'm sorry, I encountered an error. Please try again." 
+        role: 'assistant', 
+        content: "I'm having trouble accessing information at the moment. This could be because the knowledge database is not connected. The application needs ChromaDB running to provide accurate answers." 
       }]);
+    } finally {
       setLoading(false);
     }
   };
@@ -73,7 +101,9 @@ export default function ChatInterface() {
       </CardHeader>
 
       <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message, index) => (
+        {messages
+          .filter(message => message.role !== 'system')
+          .map((message, index) => (
           <div 
             key={index} 
             className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -105,6 +135,9 @@ export default function ChatInterface() {
             </div>
           </div>
         )}
+        
+        {/* Invisible element to scroll to */}
+        <div ref={messagesEndRef} />
       </CardContent>
 
       <CardFooter className="p-4 border-t">
@@ -115,6 +148,7 @@ export default function ChatInterface() {
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
             className="flex-1"
+            disabled={loading}
           />
           <Button 
             onClick={handleSend} 
