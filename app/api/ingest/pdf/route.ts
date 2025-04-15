@@ -12,7 +12,11 @@ if (process.env.GOOGLE_API_KEY) {
 // Function to ensure the uploads directory exists
 function ensureUploadsDirectory() {
   try {
-    const pdfDirectory = path.join(process.cwd(), 'app/data/pdfs');
+    // Use the OS temporary directory instead of the app directory
+    // This is more likely to have write permissions
+    const tmpDir = process.env.TEMP || process.env.TMP || '/tmp';
+    const pdfDirectory = path.join(tmpDir, 'angel_one_pdfs');
+    
     if (!fs.existsSync(pdfDirectory)) {
       fs.mkdirSync(pdfDirectory, { recursive: true });
     }
@@ -22,6 +26,7 @@ function ensureUploadsDirectory() {
     fs.writeFileSync(testFilePath, 'test');
     fs.unlinkSync(testFilePath); // Clean up
     
+    console.log(`Using PDF directory: ${pdfDirectory}`);
     return pdfDirectory;
   } catch (error) {
     console.error('Error creating or accessing uploads directory:', error);
