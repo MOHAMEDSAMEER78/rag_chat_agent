@@ -94,7 +94,8 @@ export default function AdminPage() {
             <div className="mt-4 p-4 bg-red-50 text-red-800 rounded-md">
               <p>ChromaDB is not running. To enable full functionality:</p>
               <ol className="list-decimal ml-5 mt-2 space-y-1">
-                <li>Start ChromaDB with Docker: <code className="bg-gray-200 px-1 rounded">docker run -p 8000:8000 chromadb/chroma</code></li>
+                <li>If using Docker: <code className="bg-gray-200 px-1 rounded">docker-compose up chromadb</code></li>
+                <li>Standalone Docker: <code className="bg-gray-200 px-1 rounded">docker run -p 8000:8000 chromadb/chroma</code></li>
                 <li>Or install and run Chroma locally</li>
                 <li>Refresh this page after starting ChromaDB</li>
               </ol>
