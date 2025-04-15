@@ -1,5 +1,6 @@
 import ChatInterface from './components/ChatInterface';
 import { ThemeToggle } from '@/components/theme-toggle';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -9,6 +10,15 @@ export default function Home() {
           <h1 className="text-2xl md:text-3xl font-bold">
             Angel One Support Assistant
           </h1>
+          <div className="flex items-center gap-4">
+            <Link 
+              href="/admin" 
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium"
+            >
+              Admin Dashboard
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
         
         <div className="w-full h-[75vh]">
