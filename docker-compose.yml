@@ -33,6 +33,8 @@ services:
       - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.token.TokenAuthCredentialsProvider
       - CHROMA_SERVER_AUTH_CREDENTIALS=admin:admin
       - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token.TokenAuthServerProvider
+      - CHROMA_SERVER_CORS_ALLOW_ORIGINS=*
+      - CHROMA_SERVER_HOST=0.0.0.0
 
 networks:
   app-network:

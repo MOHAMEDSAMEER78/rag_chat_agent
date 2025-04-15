@@ -15,18 +15,65 @@ export default function AdminPage() {
   useEffect(() => {
     const checkChromaAvailability = async () => {
       try {
-        const response = await fetch(`${process.env.CHROMA_URL || 'http://localhost:8000'}/api/v2/heartbeat`, {
-          method: 'GET',
-          signal: AbortSignal.timeout(2000), // 2 second timeout
-        });
+        const chromaUrl = process.env.CHROMA_URL || 'http://localhost:8000';
+        console.debug("Checking Chroma availability at:", chromaUrl);
         
-        if (response.ok) {
-          setChromaStatus('available');
-        } else {
+        // Try using fetch first
+        try {
+          const response = await fetch(`${chromaUrl}/api/v2/heartbeat`, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+            signal: AbortSignal.timeout(2000), // 2 second timeout
+          });
+          
+          console.debug("Chroma response status:", response.status);
+          
+          if (response.ok) {
+            try {
+              const responseText = await response.text();
+              console.debug("Chroma response text:", responseText);
+              
+              // Check if response contains heartbeat data
+              if (responseText.includes("heartbeat")) {
+                console.debug("Chroma is available");
+                setChromaStatus('available');
+                return;
+              }
+            } catch (parseError) {
+              console.error("Error parsing Chroma response:", parseError);
+            }
+          }
+          
+          // If we got here, the response wasn't valid
+          console.debug("Chroma response wasn't valid");
+          setChromaStatus('unavailable');
+        } catch (fetchError) {
+          console.error("Fetch error checking Chroma:", fetchError);
+          // Continue to try other methods if fetch fails
+          
+          // Make a server-side call as a fallback
+          try {
+            const serverCheckResponse = await fetch('/api/check-chroma', {
+              method: 'GET',
+            });
+            
+            if (serverCheckResponse.ok) {
+              const result = await serverCheckResponse.json();
+              if (result.available) {
+                setChromaStatus('available');
+                return;
+              }
+            }
+          } catch (serverCheckError) {
+            console.error("Server-side check error:", serverCheckError);
+          }
+          
           setChromaStatus('unavailable');
         }
       } catch (error) {
-        console.error('Error checking Chroma availability:', error);
+        console.error('Error in overall Chroma availability check:', error);
         setChromaStatus('unavailable');
       }
     };
