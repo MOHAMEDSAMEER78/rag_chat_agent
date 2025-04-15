@@ -1,151 +1,130 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Loader2, Send } from 'lucide-react';
 
-interface Message {
-  role: 'user' | 'assistant' | 'system';
+type Message = {
+  role: 'system' | 'user' | 'assistant';
   content: string;
-}
+};
 
 export default function ChatInterface() {
-  const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'system',
-      content: 'I am an AI assistant that can help with Angel One related queries.'
-    },
-    {
-      role: 'assistant',
-      content: 'Hi there! I\'m your Angel One support assistant. How can I help you today?'
-    }
+    { role: 'assistant', content: "Hi there! I'm your Angel One support assistant. How can I help you today?" }
   ]);
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Scroll to bottom whenever messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSend = async () => {
+    if (input.trim() === '') return;
     
-    if (!input.trim() || isLoading) return;
+    // Add user message
+    const userMessage: Message = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
     
-    // Add the user message to the chat
-    const userMessage: Message = { role: 'user', content: input.trim() };
-    setMessages(prevMessages => [...prevMessages, userMessage]);
+    // Clear input and set loading
     setInput('');
-    setIsLoading(true);
+    setLoading(true);
     
     try {
-      // Send the message to the API
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-        }),
-        // Add a timeout to prevent hanging forever
-        signal: AbortSignal.timeout(15000), // 15 seconds timeout
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || `Error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Add the assistant's response to the chat
-      setMessages(prevMessages => [
-        ...prevMessages, 
-        { role: 'assistant', content: data.content },
-      ]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      // Add an error message
-      setMessages(prevMessages => [
-        ...prevMessages,
-        { 
+      // This is a placeholder - in a real app, you would call your AI backend here
+      // For demo purposes, we'll just simulate a response after a delay
+      setTimeout(() => {
+        const assistantMessage: Message = { 
           role: 'assistant', 
-          content: 'I\'m having trouble accessing information at the moment. This could be because the knowledge database is not connected. The application needs ChromaDB running to provide accurate answers.' 
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
+          content: "I'm an AI assistant for Angel One. I'd be happy to help with your questions about Angel One's services, trading accounts, investments, or technical support. What specifically would you like to know?" 
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        setLoading(false);
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error calling AI:', error);
+      setMessages(prev => [...prev, { 
+        role: 'assistant' as const, 
+        content: "I'm sorry, I encountered an error. Please try again." 
+      }]);
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
   return (
-    <div className="flex flex-col h-full max-h-[80vh] rounded-lg overflow-hidden border border-gray-300 bg-white">
-      {/* Chat header */}
-      <div className="p-4 bg-blue-600 text-white font-semibold">
-        Angel One Support Assistant
-      </div>
-      
-      {/* Messages container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages
-          .filter(message => message.role !== 'system')
-          .map((message, index) => (
+    <Card className="flex flex-col w-full h-full border rounded-lg shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between p-4 border-b">
+        <div className="flex items-center space-x-2">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-primary text-primary-foreground">AO</AvatarFallback>
+          </Avatar>
+          <CardTitle className="text-lg font-medium">Angel One Support Assistant</CardTitle>
+        </div>
+        <ThemeToggle />
+      </CardHeader>
+
+      <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.map((message, index) => (
+          <div 
+            key={index} 
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
             <div 
-              key={index} 
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                message.role === 'user' 
+                  ? 'bg-primary text-primary-foreground ml-12' 
+                  : 'bg-muted border ml-2'
+              }`}
             >
-              <div 
-                className={`max-w-[75%] rounded-lg p-3 ${
-                  message.role === 'user' 
-                    ? 'bg-blue-500 text-white rounded-tr-none' 
-                    : 'bg-gray-200 text-gray-800 rounded-tl-none'
-                }`}
-              >
-                {message.content}
-              </div>
+              {message.role === 'assistant' && (
+                <div className="flex items-center mb-1">
+                  <Avatar className="h-6 w-6 mr-2">
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">AO</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs font-medium">Angel One Assistant</span>
+                </div>
+              )}
+              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
             </div>
-          ))}
-        
-        {/* Loading indicator */}
-        {isLoading && (
+          </div>
+        ))}
+        {loading && (
           <div className="flex justify-start">
-            <div className="bg-gray-200 text-gray-800 rounded-lg rounded-tl-none max-w-[75%] p-3">
-              <div className="flex space-x-2 items-center">
-                <div className="w-2 h-2 rounded-full bg-gray-600 animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-gray-600 animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 rounded-full bg-gray-600 animate-bounce" style={{ animationDelay: '300ms' }}></div>
-              </div>
+            <div className="bg-muted border rounded-lg px-4 py-2 flex items-center space-x-2 max-w-[80%]">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <p className="text-sm">Angel One Assistant is typing...</p>
             </div>
           </div>
         )}
-        
-        {/* Invisible element to scroll to */}
-        <div ref={messagesEndRef} />
-      </div>
-      
-      {/* Input form */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-300">
-        <div className="flex space-x-2">
-          <input
-            type="text"
+      </CardContent>
+
+      <CardFooter className="p-4 border-t">
+        <div className="flex w-full items-center space-x-2">
+          <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your question here..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isLoading}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your message..."
+            className="flex-1"
           />
-          <button
-            type="submit"
-            className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-            disabled={isLoading || !input.trim()}
+          <Button 
+            onClick={handleSend} 
+            disabled={input.trim() === '' || loading}
+            size="icon"
           >
-            <Send size={20} />
-          </button>
+            <Send className="h-4 w-4" />
+          </Button>
         </div>
-      </form>
-    </div>
+      </CardFooter>
+    </Card>
   );
 } 
