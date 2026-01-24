@@ -1,16 +1,21 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const CREDITS_FILE = path.join(process.cwd(), 'app/data/user-credits.json');
+const DATA_DIR = path.join(process.cwd(), 'app/data');
+const CREDITS_FILE = path.join(DATA_DIR, 'user-credits.json');
 const DEFAULT_CREDITS = 5;
 
 export interface UserCredits {
   [userId: string]: number;
 }
 
-// Ensure the credits file exists
+// Ensure the data directory and credits file exist
 async function ensureCreditsFile(): Promise<void> {
   try {
+    // Create data directory if it doesn't exist
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    
+    // Check if file exists
     await fs.access(CREDITS_FILE);
   } catch {
     // File doesn't exist, create it with empty object
@@ -21,13 +26,30 @@ async function ensureCreditsFile(): Promise<void> {
 // Read all user credits
 async function readCredits(): Promise<UserCredits> {
   await ensureCreditsFile();
-  const data = await fs.readFile(CREDITS_FILE, 'utf-8');
-  return JSON.parse(data);
+  try {
+    const data = await fs.readFile(CREDITS_FILE, 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error parsing credits file:', error);
+    // If JSON is corrupted, reset to empty object
+    await fs.writeFile(CREDITS_FILE, JSON.stringify({}));
+    return {};
+  }
 }
 
-// Write user credits
+// Write user credits with basic locking mechanism
+let writeLock = Promise.resolve();
+
 async function writeCredits(credits: UserCredits): Promise<void> {
-  await fs.writeFile(CREDITS_FILE, JSON.stringify(credits, null, 2));
+  // Wait for any pending write to complete
+  await writeLock;
+  
+  // Create a new lock for this write
+  writeLock = (async () => {
+    await fs.writeFile(CREDITS_FILE, JSON.stringify(credits, null, 2));
+  })();
+  
+  await writeLock;
 }
 
 // Get credits for a specific user

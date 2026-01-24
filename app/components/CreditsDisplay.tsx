@@ -24,8 +24,8 @@ export default function CreditsDisplay() {
   useEffect(() => {
     fetchCredits();
     
-    // Refresh credits every 10 seconds
-    const interval = setInterval(fetchCredits, 10000);
+    // Refresh credits every 30 seconds
+    const interval = setInterval(fetchCredits, 30000);
     
     return () => clearInterval(interval);
   }, []);

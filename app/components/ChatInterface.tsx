@@ -72,6 +72,23 @@ export default function ChatInterface() {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
+        
+        if (response.status === 401) {
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: "Please sign in to use the chat feature. You'll receive 5 free credits to get started!" 
+          }]);
+          return;
+        }
+        
+        if (response.status === 403) {
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: "You have run out of credits. Please contact support to get more credits." 
+          }]);
+          return;
+        }
+        
         throw new Error(errorData?.error || `Error: ${response.status}`);
       }
       
@@ -89,24 +106,11 @@ export default function ChatInterface() {
       }]);
     } catch (error) {
       console.error('Error calling AI:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
-      if (errorMessage.includes('Unauthorized')) {
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: "Please sign in to use the chat feature. You'll receive 5 free credits to get started!" 
-        }]);
-      } else if (errorMessage.includes('Insufficient credits')) {
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: "You have run out of credits. Please contact support to get more credits." 
-        }]);
-      } else {
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: "I'm having trouble accessing information at the moment. This could be because the knowledge database is not connected. The application needs ChromaDB running to provide accurate answers." 
-        }]);
-      }
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "I'm having trouble accessing information at the moment. This could be because the knowledge database is not connected. The application needs ChromaDB running to provide accurate answers." 
+      }]);
     } finally {
       setLoading(false);
     }
