@@ -1,3 +1,4 @@
 node_modules
 .next
 app/data/user-credits.json
+tsconfig.tsbuildinfo
