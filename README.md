@@ -4,6 +4,8 @@ A Retrieval-Augmented Generation (RAG) based chatbot trained on Angel One's cust
 
 ## 🚀 Features
 
+- **User Authentication**: Secure sign-in/sign-up with Clerk authentication
+- **Credits System**: Each user receives 5 free credits upon sign-up, with 1 credit deducted per chat message
 - **Source-Constrained QA**: The chatbot only answers questions based on the knowledge it has from Angel One support pages and provided insurance PDF documents.
 - **User-Friendly Interface**: Clean, modern web interface for interacting with the chatbot.
 - **Admin Dashboard**: Separate interface for data ingestion and management.
@@ -13,6 +15,7 @@ A Retrieval-Augmented Generation (RAG) based chatbot trained on Angel One's cust
 ## 📋 Technical Stack
 
 - **Framework**: Next.js with TypeScript
+- **Authentication**: Clerk
 - **Styling**: Tailwind CSS
 - **RAG Implementation**: LangChain.js
 - **Vector Store**: Chroma DB
@@ -28,6 +31,7 @@ A Retrieval-Augmented Generation (RAG) based chatbot trained on Angel One's cust
 - Node.js (v18 or higher)
 - npm or yarn
 - Google API key (Gemini)
+- Clerk account and API keys (for authentication)
 - Docker & Docker Compose (optional, for containerized deployment)
 
 ### Installation
@@ -51,7 +55,14 @@ yarn install
 
 ```
 GOOGLE_API_KEY=your-google-api-key-here
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your-clerk-publishable-key-here
+CLERK_SECRET_KEY=your-clerk-secret-key-here
 ```
+
+To get Clerk API keys:
+1. Sign up at [Clerk.com](https://clerk.com)
+2. Create a new application
+3. Copy your publishable and secret keys from the dashboard
 
 4. Run the development server:
 
@@ -116,9 +127,17 @@ docker-compose up chromadb
 
 ## 📚 Usage
 
+### User Authentication & Credits
+
+- New users are automatically granted 5 free credits upon sign-up
+- Each chat message costs 1 credit
+- Your remaining credits are displayed in the header when signed in
+- Sign in is required to use the chat feature
+
 ### Chatbot Interface
 
-- Navigate to the main page (http://localhost:3000) to use the chatbot
+- Navigate to the main page (http://localhost:3000)
+- Sign in or sign up to receive your 5 free credits
 - Type questions related to Angel One services in the input box
 - The chatbot will respond with information based solely on the ingested documents
 - If a question is outside the scope of the knowledge base, the chatbot will respond with "I don't know."

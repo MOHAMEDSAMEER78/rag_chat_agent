@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
@@ -14,6 +15,7 @@ type Message = {
 };
 
 export default function ChatInterface() {
+  const { isSignedIn } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'system',
@@ -26,6 +28,7 @@ export default function ChatInterface() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom whenever messages change
@@ -35,6 +38,15 @@ export default function ChatInterface() {
 
   const handleSend = async () => {
     if (input.trim() === '' || loading) return;
+    
+    // Check if user is signed in
+    if (!isSignedIn) {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: "Please sign in to use the chat feature. You'll receive 5 free credits to get started!" 
+      }]);
+      return;
+    }
     
     // Add user message
     const userMessage: Message = { role: 'user', content: input.trim() };
@@ -65,6 +77,11 @@ export default function ChatInterface() {
       
       const data = await response.json();
       
+      // Update credits if returned
+      if (data.remainingCredits !== undefined) {
+        setCredits(data.remainingCredits);
+      }
+      
       // Add the assistant's response to the chat
       setMessages(prev => [...prev, { 
         role: 'assistant', 
@@ -72,10 +89,24 @@ export default function ChatInterface() {
       }]);
     } catch (error) {
       console.error('Error calling AI:', error);
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: "I'm having trouble accessing information at the moment. This could be because the knowledge database is not connected. The application needs ChromaDB running to provide accurate answers." 
-      }]);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      if (errorMessage.includes('Unauthorized')) {
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: "Please sign in to use the chat feature. You'll receive 5 free credits to get started!" 
+        }]);
+      } else if (errorMessage.includes('Insufficient credits')) {
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: "You have run out of credits. Please contact support to get more credits." 
+        }]);
+      } else {
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: "I'm having trouble accessing information at the moment. This could be because the knowledge database is not connected. The application needs ChromaDB running to provide accurate answers." 
+        }]);
+      }
     } finally {
       setLoading(false);
     }

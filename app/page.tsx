@@ -1,6 +1,8 @@
 import ChatInterface from './components/ChatInterface';
+import { UserButton, SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
 import { ThemeToggle } from '@/components/theme-toggle';
 import Link from 'next/link';
+import CreditsDisplay from './components/CreditsDisplay';
 
 export default function Home() {
   return (
@@ -11,12 +13,23 @@ export default function Home() {
             Angel One Support Assistant
           </h1>
           <div className="flex items-center gap-4">
-            <Link 
-              href="/admin" 
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium"
-            >
-              Admin Dashboard
-            </Link>
+            <SignedIn>
+              <CreditsDisplay />
+              <Link 
+                href="/admin" 
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium"
+              >
+                Admin Dashboard
+              </Link>
+              <UserButton afterSignOutUrl="/" />
+            </SignedIn>
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm font-medium">
+                  Sign In
+                </button>
+              </SignInButton>
+            </SignedOut>
             <ThemeToggle />
           </div>
         </div>

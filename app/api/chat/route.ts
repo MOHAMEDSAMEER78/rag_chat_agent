@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { generateResponse, initializeChatModel } from '@/app/lib/chatModel';
 import { initializeEmbeddings } from '@/app/lib/vectorStore';
+import { getUserCredits, deductCredits } from '@/app/lib/credits';
 
 // Initialize the models with API key from environment variables
 if (process.env.GOOGLE_API_KEY) {
@@ -10,6 +12,26 @@ if (process.env.GOOGLE_API_KEY) {
 
 export async function POST(req: NextRequest) {
   try {
+    // Check authentication
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Please sign in to use the chat.' },
+        { status: 401 }
+      );
+    }
+
+    // Check user credits
+    const currentCredits = await getUserCredits(userId);
+    
+    if (currentCredits <= 0) {
+      return NextResponse.json(
+        { error: 'Insufficient credits. You have 0 credits remaining.' },
+        { status: 403 }
+      );
+    }
+
     // Check for Google API key
     if (!process.env.GOOGLE_API_KEY) {
       return NextResponse.json(
@@ -39,13 +61,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Deduct one credit before generating response
+    const remainingCredits = await deductCredits(userId, 1);
+
     // Generate a response
     const response = await generateResponse(latestMessage.content);
 
-    // Return the response
+    // Return the response along with remaining credits
     return NextResponse.json({
       role: 'assistant',
-      content: response
+      content: response,
+      remainingCredits
     });
   } catch (error) {
     console.error('Error processing chat request:', error);
